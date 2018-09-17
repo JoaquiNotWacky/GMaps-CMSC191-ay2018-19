@@ -1,0 +1,119 @@
+<?php
+  include_once 'dbs.php';
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+<script src="http://maps.googleapis.com/maps/api/js?key=API_KEY"></script>
+<script>
+
+var myUPLB=new google.maps.LatLng(14.167525, 121.243368);
+
+function downloadUrl(url,callback) {
+ var request = window.ActiveXObject ?
+     new ActiveXObject('Microsoft.XMLHTTP') :
+     new XMLHttpRequest;
+ request.onreadystatechange = function() {
+   if (request.readyState == 4) {
+     callback(request, request.status);
+   }
+ };
+
+ request.open('GET', url, true);
+ request.send(null);
+}
+
+function initialize() {
+var mapProp = {
+  center:myUPLB,
+  zoom:30,
+  mapTypeId:google.maps.MapTypeId.ROADMAP
+  };
+
+
+
+downloadUrl("/dbs.php", function(data){
+  var pathCoordinate = []
+  var xml = data.responseXML;
+  var markers = xml.documentElement.getElementsByTagName('marker');
+  Array.prototype.forEach.call(markers, function(markerElem){
+    var id = markerElem.getAttribute('id');
+    var name = markerElem.getAttribute('name');    
+    var address = markerElem.getAttribute('address');
+    var type = markerElem.getAttribute('type');
+    var pathPoints = {lat: parseFloat(markerElem.getAttribute('lat')), lng: parseFloat(markerElem.getAttribute('lng'))}
+    if(type.toString() == "Mall") {
+      pathCoordinate.push(pathPoints)
+    }
+    if (name == "SM City Calamba"){
+      smCircle = new google.maps.Circle({
+					strokeColor: '#FF00FF',
+					strokeOpacity: 0.4,
+					strokeWeight: 2,
+					fillColor: '#00FF00',
+					fillOpacity: 0.35,
+					map: map,
+					center: pathPoints,
+					radius: 250
+				  });
+    }
+    
+    var point = new google.maps.LatLng(
+        parseFloat(markerElem.getAttribute('lat')),
+        parseFloat(markerElem.getAttribute('lng')));
+        var infowincontent = document.createElement('div');
+    var strong = document.createElement('strong');
+    strong.textContent = name
+    infowincontent.appendChild(strong);
+    infowincontent.appendChild(document.createElement('br'));
+
+    var text = document.createElement('text');
+    text.textContent = address
+    infowincontent.appendChild(text);
+    var marker = new google.maps.Marker({
+      map: map,
+      position: point,
+      label: type.toString()
+    });
+    if(type.toString() == "Mall"){
+      marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png')
+    } else if (type.toString() == "Restaurant"){
+      marker.setIcon('http://maps.google.com/mapfiles/ms/icons/blue-dot.png')
+    } else if (type.toString() == "Bank"){
+      marker.setIcon('http://maps.google.com/mapfiles/ms/icons/yellow-dot.png')
+    } else if (type.toString() == "Inn"){
+      marker.setIcon('http://maps.google.com/mapfiles/ms/icons/purple-dot.png')
+    } else if (type.toString() == "Amusement Park"){
+      marker.setIcon('http://maps.google.com/mapfiles/ms/icons/orange-dot.png')      
+    } else if (type.toString() == "Resort"){
+      marker.setIcon({
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 10})
+    } else if (type.toString() == "Auditorium"){
+      marker.setIcon({
+      path: google.maps.SymbolPath.BACKWARD_OPEN_ARROW,
+      scale: 5})
+    }
+  })
+  var mallLines = new google.maps.Polyline({
+    path: pathCoordinate,
+    geodesic: true,
+    strokeColor: '#FF0000',
+    strokeOpacity: 1.0,
+    strokeWeight: 2
+  })
+  mallLines.setMap(map)
+})
+var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+</script>
+</head>
+
+<body>
+<div id="googleMap" style="width:1500px;height:1500px;"></div>
+
+</body>
+</html>
